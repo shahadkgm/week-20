@@ -19,7 +19,6 @@ export default function LoginPage() {
     setForm({ ...form, [e.target.id]: e.target.value });
   };
 
-  // Handle form submit
   const SaveForm = async (e) => {
     e.preventDefault();
     const { email, password } = form;
@@ -49,7 +48,7 @@ export default function LoginPage() {
 
       setTimeout(() => {
         navigate("/home");
-      }, 1200);
+      }, 1000);
 
     } catch (error) {
       console.error("Error during login:", error);

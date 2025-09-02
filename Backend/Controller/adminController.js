@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
 import Student from "../models/Student.js"
 import { error } from "console"
+import { read } from "fs"
 
 export const GetForAdmin=async(req,res)=>{
   try {
@@ -25,7 +26,6 @@ export const AdminLogin = async (req, res) => {
         { expiresIn: "1h" }
       );
 
-      // ✅ Send token to frontend
       return res.json({ success: true, token });
     } catch (err) {
       console.error("JWT error:", err);
@@ -54,9 +54,27 @@ export const UpdateStudent=async(req,res)=>{
 
 }
 
+export const AdminSearch=async(req,res)=>{
+  try {
+    console.log("admin search")
+    const {q}=req.query
+    console.log("from adminsearc",q)
+    if(!q)return res.json([]);
+    const results=await Student.find({
+      name:{$regex:q,$options:"i"}
+    })
+    res.json(results)
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({error:"server error"})
+  }
+}
+
  export const DeleteStudent=async(req,res)=>{
     try {
         const {id} =req.params
+        
         console.log("id from deletestuden",id)
         const deletedstudent=await Student.findByIdAndDelete(id)
         if(!deletedstudent){

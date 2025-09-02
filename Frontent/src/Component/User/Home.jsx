@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { setUser } from "../../Sources/reducer/AuthSlice";
 import Profile from "./Profilepage";
+import { add } from "../../Sources/reducer/Counterslice";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function HomePage() {
   const openModal=()=> setIsModalOpen(true)
   const closeModal=()=> setIsModalOpen(false)
   const { user } = useSelector((state) => state.auth);
+  const count=useSelector((state)=>state.counter.value)
   const handleDashBoard=()=>{
     console.log("dashbord")
       console.log("user from homepage", user);
@@ -79,7 +81,7 @@ export default function HomePage() {
           Welcome {user?.name||user?.email || "Guest"}
         </h2>
         <p className="text-gray-600 max-w-md">
-          This is a simple homepage with a navigation bar that contains only one button.
+          This is  homepage 
         </p>
         <button
           onClick={apiCall}
@@ -87,8 +89,12 @@ export default function HomePage() {
         >
           Click for backend
         </button>
+       
         </div>
+         <h1>{count} hello</h1>
+        <button  onClick={()=>dispatch(add())} className="bg-amber-50"> click here count</button>
       </main>
+      
     </div>
   );
 }

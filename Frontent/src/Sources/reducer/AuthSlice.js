@@ -1,7 +1,6 @@
 // reducer/AuthSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
-// Load user from localStorage if exists
 const storedUser = JSON.parse(localStorage.getItem("user"));
 
 export const AuthSlice = createSlice({

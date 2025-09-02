@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AddButton from "../../assets/AddButton.png";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -11,6 +12,11 @@ function AdminDashboard() {
   const [editName, setEditName] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const navigate = useNavigate();
+  const { user: LoggedInUser } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+
+  const [search, setSearch] = useState("");
+  const [typingTimeout, setTypingTimeout] = useState(null); 
 
   useEffect(() => {
     fetchUsers();
@@ -25,10 +31,13 @@ function AdminDashboard() {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`http://localhost:3000/api/updateStudent/${editUser._id}`, {
-        name: editName,
-        password: editPassword,
-      });
+      await axios.put(
+        `http://localhost:3000/api/updateStudent/${editUser._id}`,
+        {
+          name: editName,
+          password: editPassword,
+        }
+      );
       setEditUser(null);
       fetchUsers();
     } catch (err) {
@@ -42,7 +51,13 @@ function AdminDashboard() {
     try {
       await axios.delete(`http://localhost:3000/api/deleteStudent/${id}`);
       setUsers(users.filter((user) => user._id !== id));
-      toast.success("deleted succusfully");
+      if (LoggedInUser && LoggedInUser.id === id) {
+        dispatch(setUser(null));
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/");
+      }
+      toast.success("deleted successfully");
     } catch (error) {
       console.error("error from admindashboard fetch issue", error);
       toast.error("error in deleting");
@@ -58,24 +73,64 @@ function AdminDashboard() {
     console.log("in handle create");
   };
 
+  const HandleLogout = () => {
+    localStorage.removeItem("token");
+    console.log("logout admin");
+    navigate("/admin");
+  };
+
+  // ✅ Fixed search with debounce
+  const HandleSearch = (e) => {
+    const query = e.target.value;
+    setSearch(query);
+
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    setTypingTimeout(
+      setTimeout(async () => {
+        if (query.trim() === "") {
+          fetchUsers();
+        } else {
+          try {
+            const res = await axios.get(
+              `http://localhost:3000/api/search?q=${query}`
+            );
+            setUsers(res.data);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      }, 500) // wait 500ms after user stops typing
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 p-6">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+      <button
+        className=" bg-red-500 rounded font-bold border border-black mask-l-to-100%"
+        onClick={HandleLogout}
+      >
+        LogOut
+      </button>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Users List
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight ml-4">
+              Users List
+            </h2>
+
+            {/* 🔍 Search Bar */}
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={HandleSearch}
+              className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <button onClick={handleCreate} className="focus:outline-none">
             <img
               src={AddButton}
@@ -88,7 +143,9 @@ function AdminDashboard() {
         {editUser && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Edit User</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Edit User
+              </h3>
               <div className="space-y-4">
                 <input
                   type="text"
@@ -125,7 +182,7 @@ function AdminDashboard() {
 
         {users.length === 0 ? (
           <p className="text-center text-lg text-gray-600 font-medium">
-            Loading users...
+            {search ? "No matching users found." : "Loading users..."}
           </p>
         ) : (
           <div className="overflow-x-auto shadow-lg rounded-xl">

@@ -35,7 +35,7 @@ export const getStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.user.id);
     if (!student) return res.status(404).json({ error: "User not found" });
-    res.json({ name: student.name, email: student.email });
+    res.json({_id:student._id, name: student.name, email: student.email,image:student.image ?student.image.toString("base64"):null, });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
